@@ -1,0 +1,29 @@
+import type { Rule } from "../lib/types.js";
+import { pkgManagerDeclared } from "./pkgManagerDeclared.js";
+import { singleLockfile } from "./singleLockfile.js";
+import { noLatestSpecifier } from "./noLatestSpecifier.js";
+import { onlyBuiltDepsDeclared } from "./onlyBuiltDepsDeclared.js";
+import { noNpmInScripts } from "./noNpmInScripts.js";
+import { noEnginesNpm } from "./noEnginesNpm.js";
+import { validatedEnv } from "./validatedEnv.js";
+import { engineDbExactPin } from "./engineDbExactPin.js";
+import { noFileDeps } from "./noFileDeps.js";
+import { pkgManagerVersionAligned } from "./pkgManagerVersionAligned.js";
+
+/**
+ * Declaration order is enforcement order. New rules append at the bottom
+ * unless they replace an existing rule (in which case bump the package
+ * major version per NODE_TOOLING.md versioning policy).
+ */
+export const RULES: Rule[] = [
+  pkgManagerDeclared,
+  singleLockfile,
+  noLatestSpecifier,
+  onlyBuiltDepsDeclared,
+  noNpmInScripts,
+  noEnginesNpm,
+  validatedEnv,
+  engineDbExactPin,
+  noFileDeps,
+  pkgManagerVersionAligned,
+];

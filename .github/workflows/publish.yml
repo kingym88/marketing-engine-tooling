@@ -1,0 +1,56 @@
+name: publish
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: "@kingym88"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Build package
+        run: pnpm build
+
+      - name: Self-check (run tooling rules against this repo)
+        run: pnpm exec tsx src/bin/check-tooling.ts .
+
+      # NOTE: no auto-bump. Per NODE_TOOLING.md versioning policy, version
+      # is bumped MANUALLY by the developer (minor for new rules, patch
+      # for fixes, major for incompatible changes). The publish step here
+      # checks the registry first and skips cleanly if the version already
+      # exists — that way every push to main runs CI but only NEW versions
+      # actually publish. If you forgot to bump and intended to ship,
+      # bump in a follow-up commit.
+      - name: Publish to GitHub Packages (skip if version unchanged)
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          PKG_NAME=$(node -p "require('./package.json').name")
+          if pnpm view "$PKG_NAME@$PKG_VERSION" version > /dev/null 2>&1; then
+            echo "Version $PKG_VERSION already published; skipping."
+          else
+            echo "Publishing $PKG_NAME@$PKG_VERSION..."
+            pnpm publish --no-git-checks
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

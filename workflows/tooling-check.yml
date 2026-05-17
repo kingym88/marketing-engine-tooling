@@ -1,0 +1,35 @@
+# Drop this file into your repo's .github/workflows/ to run the tooling
+# contract check on every PR.
+#
+# Requires the consuming repo to have @kingym88/marketing-engine-tooling
+# installed as a devDependency and a NODE_AUTH_TOKEN secret configured
+# for pulling from GitHub Packages.
+name: tooling-check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-tooling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: "@kingym88"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+
+      - name: Run tooling check
+        run: pnpm exec check-tooling

@@ -1,0 +1,53 @@
+{
+  "name": "@kingym88/marketing-engine-tooling",
+  "version": "1.0.0",
+  "description": "Shared Node tooling contract for the Wakiru marketing-engine ecosystem (engine, per-brand DB packages, and brand-owned consumer apps). Ships an enforceable check script and the authoritative tooling rules.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "check-tooling": "./dist/bin/check-tooling.js"
+  },
+  "files": [
+    "dist",
+    "NODE_TOOLING.md",
+    "workflows"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "packageManager": "pnpm@10.33.2",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "scripts": {
+    "build": "tsc",
+    "check-tooling": "tsx src/bin/check-tooling.ts",
+    "check-tooling:self": "tsx src/bin/check-tooling.ts .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "tsx": "4.19.2",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kingym88/marketing-engine-tooling.git"
+  }
+}
