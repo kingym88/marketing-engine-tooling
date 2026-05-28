@@ -1,6 +1,6 @@
 {
   "name": "@kingym88/marketing-engine-tooling",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Shared Node tooling contract for the Wakiru marketing-engine ecosystem (engine, per-brand DB packages, and brand-owned consumer apps). Ships an enforceable check script and the authoritative tooling rules.",
   "type": "module",
   "main": "dist/index.js",

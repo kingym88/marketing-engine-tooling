@@ -7,6 +7,7 @@ import { noNpmInScripts } from "./noNpmInScripts.js";
 import { noEnginesNpm } from "./noEnginesNpm.js";
 import { validatedEnv } from "./validatedEnv.js";
 import { engineDbExactPin } from "./engineDbExactPin.js";
+import { contractsExactPin } from "./contractsExactPin.js";
 import { noFileDeps } from "./noFileDeps.js";
 import { pkgManagerVersionAligned } from "./pkgManagerVersionAligned.js";
 
@@ -24,6 +25,7 @@ export const RULES: Rule[] = [
   noEnginesNpm,
   validatedEnv,
   engineDbExactPin,
+  contractsExactPin,
   noFileDeps,
   pkgManagerVersionAligned,
 ];

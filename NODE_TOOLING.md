@@ -188,7 +188,24 @@ in lockstep with whatever code change the consumer needs to make.
 
 ---
 
-### `no-file-deps` (rule 9)
+### `contracts-exact-pin` (rule 9)
+
+Any dependency matching `*-marketing-engine-contracts` (the shared Zod schemas /
+helpers package) MUST be exact-version pinned, not caret-pinned or range-pinned.
+So `"1.0.0"`, not `"^1.0.0"`.
+
+**Why**: The contracts package defines the job-data schemas and platform constants
+shared by every consumer (engine, workers, admin UI). A minor-version bump can
+change schema shapes, status enums, or HMAC verifier signatures. Exact pinning
+forces every consumer to upgrade deliberately and in lockstep rather than picking
+up breaking changes silently on the next install.
+
+**Fix**: Edit `package.json`, change `"^1.0.0"` to `"1.0.0"`. Run
+`pnpm install` to refresh the lockfile.
+
+---
+
+### `no-file-deps` (rule 10)
 
 No `dependencies` or `devDependencies` entry may use a `file:` or
 `link:` protocol referring to a local filesystem path.
@@ -203,7 +220,7 @@ development (without committing the change).
 
 ---
 
-### `pkg-manager-version-aligned` (rule 10)
+### `pkg-manager-version-aligned` (rule 11)
 
 Within the marketing-engine ecosystem, the `packageManager` version
 declared in `package.json` SHOULD match across:
@@ -236,7 +253,7 @@ Each violation prints as:
   → <how to fix, with the specific file/line if known>
 ```
 
-The script exits non-zero if any rule (1–9) is violated. Rule 10 is a
+The script exits non-zero if any rule (1–10) is violated. Rule 11 is a
 warning and does not affect exit status.
 
 ## Adopting the contract
