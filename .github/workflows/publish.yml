@@ -8,7 +8,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # needed to push the v<version> tag after publishing
       packages: write
     steps:
       - uses: actions/checkout@v4
@@ -43,14 +43,35 @@ jobs:
       # actually publish. If you forgot to bump and intended to ship,
       # bump in a follow-up commit.
       - name: Publish to GitHub Packages (skip if version unchanged)
+        id: publish
         run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
           PKG_NAME=$(node -p "require('./package.json').name")
+          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
           if pnpm view "$PKG_NAME@$PKG_VERSION" version > /dev/null 2>&1; then
             echo "Version $PKG_VERSION already published; skipping."
+            echo "published=false" >> "$GITHUB_OUTPUT"
           else
             echo "Publishing $PKG_NAME@$PKG_VERSION..."
             pnpm publish --no-git-checks
+            echo "published=true" >> "$GITHUB_OUTPUT"
           fi
         env:
+          # CI is the sanctioned publisher; prepublishOnly guard allows it.
+          CI: "true"
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Anchor every published version to a main commit. The tag is the audit
+      # trail that catches registry-vs-main drift (a later push that finds the
+      # tag already present on a DIFFERENT commit means someone published out of
+      # band). Only runs when this push actually published a new version.
+      - name: Tag the published version
+        if: steps.publish.outputs.published == 'true'
+        run: |
+          TAG="v${{ steps.publish.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "::error::Tag $TAG already exists but version was just published — registry/main drift. Investigate before continuing."
+            exit 1
+          fi
+          git tag -a "$TAG" -m "Published $TAG from $(git rev-parse --short HEAD)"
+          git push origin "$TAG"

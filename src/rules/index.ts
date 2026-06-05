@@ -10,6 +10,7 @@ import { engineDbExactPin } from "./engineDbExactPin.js";
 import { contractsExactPin } from "./contractsExactPin.js";
 import { noFileDeps } from "./noFileDeps.js";
 import { pkgManagerVersionAligned } from "./pkgManagerVersionAligned.js";
+import { publishGuardPresent } from "./publishGuardPresent.js";
 
 /**
  * Declaration order is enforcement order. New rules append at the bottom
@@ -28,4 +29,5 @@ export const RULES: Rule[] = [
   contractsExactPin,
   noFileDeps,
   pkgManagerVersionAligned,
+  publishGuardPresent,
 ];
