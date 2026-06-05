@@ -68,6 +68,8 @@ jobs:
       - name: Tag the published version
         if: steps.publish.outputs.published == 'true'
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           TAG="v${{ steps.publish.outputs.version }}"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "::error::Tag $TAG already exists but version was just published — registry/main drift. Investigate before continuing."
