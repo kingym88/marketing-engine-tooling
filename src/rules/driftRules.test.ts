@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { checkEcosystemCurrency, ecosystemPinsCurrent } from "./ecosystemPinsCurrent.js";
 import { clientContractsLockstep } from "./clientContractsLockstep.js";
+import { runChecks } from "../lib/runner.js";
 import type { RepoContext } from "../lib/types.js";
 
 const ctx = (packageJson: Record<string, unknown>): RepoContext => ({
@@ -112,4 +113,12 @@ test("lockstep: only applies to the client package", async () => {
     }),
   );
   assert.equal(v.length, 0); // not the client → not its concern
+});
+
+// ── runChecks ruleIds filter (--ecosystem-only) ─────────────────────────────
+
+test("runChecks ruleIds filter runs only the named rules", async () => {
+  // Empty filter → no rules run → no violations, whatever the repo state.
+  const none = await runChecks(process.cwd(), { ruleIds: [] });
+  assert.equal(none.violations.length, 0);
 });

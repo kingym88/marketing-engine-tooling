@@ -1,11 +1,19 @@
 #!/usr/bin/env node
 import { runChecks } from "../lib/runner.js";
 
+// Rules that apply to a workspace SUB-PACKAGE (member). The full standalone-repo
+// contract (own lockfile / packageManager / env module) doesn't apply to a
+// workspace member, but ecosystem currency + lockstep still must. Pass
+// `--ecosystem-only` when checking e.g. apps/admin.
+const ECOSYSTEM_ONLY_RULES = ["ecosystem-pins-current", "client-contracts-lockstep"];
+
 async function main(): Promise<void> {
-  const target = process.argv[2] ?? process.cwd();
+  const args = process.argv.slice(2);
+  const ecosystemOnly = args.includes("--ecosystem-only");
+  const target = args.find((a) => !a.startsWith("--")) ?? process.cwd();
   let result;
   try {
-    result = await runChecks(target);
+    result = await runChecks(target, ecosystemOnly ? { ruleIds: ECOSYSTEM_ONLY_RULES } : {});
   } catch (err) {
     console.error(`check-tooling: ${(err as Error).message}`);
     process.exit(2);
