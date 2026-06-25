@@ -238,6 +238,41 @@ ecosystem reduces "works on my machine" delta.
 
 ---
 
+### `ecosystem-pins-current` (rule 13)
+
+An exact-pinned ecosystem dependency (`*-marketing-engine-db`,
+`-contracts`, `-client`) MUST be the **latest published** version.
+
+The exact-pin rules (8/9) prove a pin has no range qualifier, but a repo
+can exact-pin an *old* version forever and stay green while the package
+moves on — the **stale-pin drift** that let the client sit on
+`contracts@1.7.0` while contracts shipped 1.9.0, silently stripping
+fields from every consumer that called through it.
+
+This rule is **opt-in**: it runs only when `TOOLING_CHECK_ECOSYSTEM_CURRENT=1`
+(set in CI, where registry auth exists), so local/offline runs never hit
+the network. When enabled it queries the registry (`npm view <pkg> version`)
+and errors on any stale pin — and a lookup failure is itself an error, so a
+mis-configured (auth-less) gate can't silently pass.
+
+**Why**: a contract is only really shipped once its consumers are on it.
+This turns "forgot to re-pin" from invisible drift into a red build.
+
+### `client-contracts-lockstep` (rule 14)
+
+Fires only on the `*-marketing-engine-client` package: its own `version`
+MUST equal its pinned `*-marketing-engine-contracts` version.
+
+The client is the HTTP SDK over the contract; the two move together. The
+convention is **client version == the contracts version it implements**, so
+"same number = compatible" holds and the client can never be published
+claiming a version that implements a different contract.
+
+**Why**: structurally forbids the client/contracts divergence that caused
+the drift, rather than relying on remembering to bump both.
+
+---
+
 ## How violations are reported
 
 Run from a consuming repo:
@@ -253,8 +288,10 @@ Each violation prints as:
   → <how to fix, with the specific file/line if known>
 ```
 
-The script exits non-zero if any rule (1–10) is violated. Rule 11 is a
-warning and does not affect exit status.
+The script exits non-zero if any error-severity rule is violated. Rule 11
+(`pkg-manager-version-aligned`) is a warning and does not affect exit
+status. Rule 13 (`ecosystem-pins-current`) only runs when
+`TOOLING_CHECK_ECOSYSTEM_CURRENT=1` (CI).
 
 ## Adopting the contract
 

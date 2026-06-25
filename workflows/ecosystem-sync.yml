@@ -1,0 +1,81 @@
+# Auto-re-pin consumer to the latest published ecosystem packages.
+#
+# Drop into a CONSUMER repo's .github/workflows/. When a marketing-engine
+# package publishes (the publisher fires a repository_dispatch — see
+# notify-consumers.yml in the publisher repos) — or on the daily safety-net
+# schedule — this runs `sync-ecosystem`, refreshes the lockfile, and opens a PR
+# bumping any stale pins to latest (lockstep-aware: in the client repo it also
+# aligns the client version to its contracts pin).
+#
+# The currency gate (rule 13) is what FAILS a stale repo; this is what FIXES it,
+# so the red is usually already resolved by a waiting PR.
+#
+# Requires: @kingym88/marketing-engine-tooling installed; NODE_AUTH_TOKEN secret;
+# and repo setting "Allow GitHub Actions to create and approve pull requests".
+name: ecosystem-sync
+
+on:
+  schedule:
+    - cron: "23 6 * * *" # daily safety net
+  workflow_dispatch: {}
+  repository_dispatch:
+    types: [ecosystem-package-published]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: "@kingym88"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+
+      # Bump stale ecosystem pins in every package.json that has them.
+      # Add an extra line per workspace package (e.g. apps/admin) as needed.
+      - name: Sync ecosystem pins
+        id: sync
+        run: |
+          pnpm exec sync-ecosystem . | tee sync.out
+          # Uncomment for monorepos:
+          # pnpm exec sync-ecosystem apps/admin | tee -a sync.out
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+
+      - name: Refresh lockfile
+        run: pnpm install --lockfile-only
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+
+      - name: Open / update the re-pin PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/ecosystem-sync
+          title: "chore: re-pin ecosystem packages to latest"
+          commit-message: "chore: re-pin ecosystem packages to latest (auto)"
+          body: |
+            Automated re-pin of the marketing-engine ecosystem packages to their
+            latest published versions, keeping this repo in lockstep and green on
+            the `ecosystem-pins-current` gate.
+
+            ```
+            ${{ steps.sync.outputs.stdout }}
+            ```
+
+            See the job log for the exact bumps. Review the lockfile diff and merge.
+          delete-branch: true

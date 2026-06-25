@@ -11,6 +11,8 @@ import { contractsExactPin } from "./contractsExactPin.js";
 import { noFileDeps } from "./noFileDeps.js";
 import { pkgManagerVersionAligned } from "./pkgManagerVersionAligned.js";
 import { publishGuardPresent } from "./publishGuardPresent.js";
+import { ecosystemPinsCurrent } from "./ecosystemPinsCurrent.js";
+import { clientContractsLockstep } from "./clientContractsLockstep.js";
 
 /**
  * Declaration order is enforcement order. New rules append at the bottom
@@ -30,4 +32,8 @@ export const RULES: Rule[] = [
   noFileDeps,
   pkgManagerVersionAligned,
   publishGuardPresent,
+  // Currency + lockstep (close the stale-pin drift hole). ecosystemPinsCurrent
+  // is opt-in via TOOLING_CHECK_ECOSYSTEM_CURRENT=1 (CI only).
+  ecosystemPinsCurrent,
+  clientContractsLockstep,
 ];

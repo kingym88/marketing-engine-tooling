@@ -1,0 +1,34 @@
+# Drop into a PUBLISHER repo (db / contracts / client). After its publish
+# workflow succeeds, this pings each consumer so their `ecosystem-sync` opens a
+# re-pin PR immediately (the daily schedule in ecosystem-sync.yml is the
+# fallback if this isn't configured).
+#
+# Requires an ECOSYSTEM_DISPATCH_TOKEN secret: a PAT (or fine-grained token)
+# with permission to send repository_dispatch to the consumer repos listed in
+# the matrix. Update `workflows:` to this repo's publish workflow name and the
+# matrix to this package's actual consumers.
+name: notify-consumers
+
+on:
+  workflow_run:
+    workflows: ["publish"]
+    types: [completed]
+
+jobs:
+  dispatch:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repo:
+          - kingym88/wakiru-marketing-engine
+          - kingym88/marketing-engine-client
+          # add/remove consumers for this package
+    steps:
+      - name: Notify ${{ matrix.repo }}
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.ECOSYSTEM_DISPATCH_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ matrix.repo }}/dispatches" \
+            -d '{"event_type":"ecosystem-package-published"}'

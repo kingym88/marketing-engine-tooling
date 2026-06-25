@@ -31,5 +31,15 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
-      - name: Run tooling check
+      # Includes the ecosystem-currency rule (rule 13). TOOLING_CHECK_ECOSYSTEM_CURRENT=1
+      # turns on the registry-backed check that every ecosystem pin is the latest
+      # published; NODE_AUTH_TOKEN lets `npm view` reach GitHub Packages.
+      #
+      # Monorepos: run once per package.json that pins ecosystem deps, e.g.
+      #   pnpm exec check-tooling .
+      #   pnpm exec check-tooling apps/admin
+      - name: Run tooling check (incl. ecosystem currency)
         run: pnpm exec check-tooling
+        env:
+          TOOLING_CHECK_ECOSYSTEM_CURRENT: "1"
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
